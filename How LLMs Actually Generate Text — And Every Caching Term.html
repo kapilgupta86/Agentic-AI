@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>How LLMs Actually Generate Text — LinkedIn Article Preview</title>
+<title>How LLMs Actually Generate Text </title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    --li-blue: #0a66c2;
+    --TechLeadship-blue: #0a66c2;
     --ink: #000000e6;
     --ink-soft: #00000099;
     --border: #e0e0e0;
@@ -149,8 +149,6 @@
 <body>
   <div class="topbar"><div class="topbar-inner"><div class="li-logo">in</div></div></div>
 
-  <p class="note">Preview only — formatted to match how this will look as a LinkedIn article. Not a live LinkedIn page.</p>
-
   <div class="card">
     <div class="byline">
       <div class="avatar">KG</div>
@@ -248,6 +246,7 @@
       <p>An LLM's inference has two phases — prefill (parallel, reads your whole prompt at once) and decode (sequential, one token at a time). The KV cache is what makes decode possible at all, living for the duration of a single answer. Prompt caching (also called prefix caching, depending on whether you're talking to a hosted API or a serving engine) reuses that same prefill work across separate requests when the prefix matches exactly, for as long as the cache window stays warm. Semantic caching skips the model altogether when a new question is similar enough to an old one, trading a small staleness risk for the biggest possible savings. Three different problems, three different lifespans, one underlying idea: never make the model redo work it's already done.</p>
 
       <hr class="divider">
+
 
 
       <div class="hashtags">

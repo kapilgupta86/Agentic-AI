@@ -30,6 +30,7 @@
 <div id="copy">
 <h1>How LLMs generate text, and every caching term untangled</h1>
 <p><em>First published on <a href="https://keshavaai.in/journal/llm-caching-untangled">keshavaai.in</a></em></p>
+<p><img src="../media/llm-caching-pipeline.png" alt="Pipeline diagram. Your prompt goes into prefill, then decode, then your answer. A semantic cache sits in front and can skip inference entirely on a hit; the prompt (prefix) cache feeds prefill; the KV cache feeds decode. Lifetimes: until a TTL or eviction rule, minutes to hours, and one generation."></p>
 <p>An LLM does not generate a sentence. It generates one token. Then another. Then another. Each one runs the full machine again: tokenize, embed, attend, predict, sample, repeat. What looks like writing is a loop running thousands of times per response.</p>
 <p>That loop has two phases that behave nothing alike. Almost every optimization you have heard of (KV caching, prompt caching, prefix caching, semantic caching, quantization) only makes sense once you know which phase it fixes. Confuse the phases and you will confuse the caches.</p>
 <h2>The two phases of inference</h2>

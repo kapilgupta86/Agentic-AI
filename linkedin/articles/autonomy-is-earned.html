@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://keshavaai.in/journal/autonomy-is-earned">
+<title>[DRAFT] Autonomy is earned: how much freedom should an AI agent get? (LinkedIn version)</title>
+<style>
+  body{font:16px/1.65 Georgia,serif;color:#1d2735;max-width:760px;margin:0 auto;padding:18px;background:#fff}
+  .draft{font:14px/1.5 system-ui,sans-serif;background:#fff3cd;border:1px solid #e0c36a;border-radius:10px;padding:12px 16px;margin-bottom:22px}
+  .draft b{color:#6b4e00} .draft ol{margin:6px 0 0 18px;padding:0}
+  #copy{border:1px dashed #b9c1cc;border-radius:10px;padding:6px 22px 18px}
+  h1{font-size:30px;line-height:1.2} h2{font-size:23px;margin:1.6em 0 .4em} h3{font-size:18px;margin:1.3em 0 .3em}
+  img{max-width:100%;height:auto;border:1px solid #e3e6eb;border-radius:8px} blockquote{border-left:3px solid #e8bd62;margin:1em 0;padding:2px 14px;color:#46556a}
+  pre{background:#f1f3f6;padding:12px;overflow:auto} code{background:#f1f3f6;padding:1px 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="draft">
+<b>DRAFT. Not posted to LinkedIn.</b> Original (canonical) version: <a href="https://keshavaai.in/journal/autonomy-is-earned">https://keshavaai.in/journal/autonomy-is-earned</a>. Publish on the website first; use this version only if you also want a full LinkedIn article.
+<ol>
+<li>LinkedIn: <i>Write article</i>. Title: <b>Autonomy is earned: how much freedom should an AI agent get?</b></li>
+<li>Cover image: <code>../media/autonomy-is-earned-cover.png</code> (upload it from the repo)</li>
+<li>Select everything inside the dashed box below, copy, paste into the editor, then check headings, lists and the image.</li>
+<li>Tables do not exist in LinkedIn articles, so they are written as lists here. The interactive animation cannot be embedded: the GIF (or the MP4 attached to a post) plus a link replaces it.</li>
+<li>After publishing, set the status to "Published" in <code>linkedin/README.md</code>.</li>
+</ol>
+</div>
+<div id="copy">
+<h1>Autonomy is earned: how much freedom should an AI agent get?</h1>
+<p><em>First published on <a href="https://keshavaai.in/journal/autonomy-is-earned">keshavaai.in</a>. Repository with the tests: https://github.com/kapilgupta86/agent-controls-harness</em></p>
+<p>Every team that builds an agent reaches the same question: how much should it be allowed to do on its own? Most teams answer it with a feeling, usually after a good demo. A demo shows what an agent can do on a good day. It says little about a bad day, and nothing about what happens after the next model update.</p>
+<p>This article proposes a different default. <strong>Autonomy is earned with evidence.</strong> An agent gets as much freedom as its tests have shown it can be trusted with, the limits are enforced by code outside the model, and the freedom is taken back automatically when the evidence fails.</p>
+<h2>Three decisions, made together</h2>
+<ul><li><strong>Risk:</strong> what is the worst plausible mistake, and can it be undone? A mislabelled ticket is cheap to fix. A wrong payment is not.</li><li><strong>Level:</strong> what is the agent allowed to do? Reading, recommending, preparing, or executing.</li><li><strong>Gate:</strong> what evidence must exist before it moves up a level, and what takes it back down?</li></ul>
+<p>Decide them together. Teams that pick the level first and look for evidence later end up with a level nobody can defend.</p>
+<h3>A working scale for autonomy</h3>
+<ul><li><strong>L0 Observe</strong>. What the agent may do: Reads permitted data and reports. Changes nothing. Evidence before promotion (illustrative): Task success on a labelled set; no data leaks.</li><li><strong>L1 Recommend</strong>. What the agent may do: Proposes options with sources. Evidence before promotion (illustrative): Claims are grounded or it abstains; reviewers agree on a sample.</li><li><strong>L2 Prepare</strong>. What the agent may do: Drafts an action for a person to review. Evidence before promotion (illustrative): Drafts are valid for the tool; the review flow works.</li><li><strong>L3 Execute approved</strong>. What the agent may do: Runs narrow actions, only with an approval tied to the exact action. Evidence before promotion (illustrative): Injection, authorization and budget tests pass; retries are safe.</li><li><strong>L4 Bounded autonomy</strong>. What the agent may do: Runs a pre-approved class of actions inside hard limits. Evidence before promotion (illustrative): Stop switch and rollback proven in a drill; a long clean record at L3.</li></ul>
+<p>This scale is a working convention for this article, not a standard. Others slice autonomy differently. What matters is that every level has a written list of what it allows and what evidence unlocks it.</p>
+<h2>Watch it happen</h2>
+<p>The animation follows an invented expense assistant. It starts at L0, earns its way up, and then a model update fails one critical test. Switch to the naive version to see the same agent given full freedom on day one.</p>
+<p><img src="../media/autonomy-earned-fix.gif" alt="Animated explainer: an invented expense assistant earns autonomy level by level, then loses one when a critical test fails."></p>
+<p>Interactive version, with step-by-step controls and a text version: <a href="https://keshavaai.in/explainers/autonomy-earned">https://keshavaai.in/explainers/autonomy-earned</a></p>
+<h2>Six rules that make it work</h2>
+<h3>1. Enforce limits outside the model</h3>
+<p>A prompt that says &quot;never pay without approval&quot; is a request, not a control. A model can be persuaded, confused or updated. The limit has to live in code that decides whether an action runs, whatever the model proposed. In the test harness that goes with this article, a deliberately obedient mocked model reads a hidden instruction in an invoice and proposes paying 9,000 to an unknown account. Without controls, the payment happens. With the policy layer in front of it, nothing moves, whatever the model said.</p>
+<h3>2. A critical failure blocks, whatever the average</h3>
+<p>Averages hide the failures that matter. Forty-nine clean cases and one failed prompt-injection test is a 98% pass rate and a release blocker. Decide before the run which tests are critical, and what pass rate the others need. Anthropic&#39;s engineering team makes a related point about evaluating agents: separate capability evals, which should start hard so they give you something to climb, from regression evals, which should stay near 100% so they catch backsliding.</p>
+<h3>3. Bind approval to the exact action</h3>
+<p>A &quot;yes&quot; to an idea is not approval of an action. Tie the approval to the fields that matter, here the type, amount and payee, so that changing any of them invalidates it. In the harness the approval is a keyed hash over those fields. Change the amount from 1,200 to 12,000 and verification fails.</p>
+<h3>4. Make retries safe, and fail closed</h3>
+<p>A timeout is the dangerous moment, because the call may already have succeeded. A retry that repeats the write pays twice. Use an idempotency key, and ask whether the action already happened before trying again. And when the policy service itself is unavailable, refuse state-changing actions while keeping read-only ones working.</p>
+<h3>5. Set hard budgets</h3>
+<p>A loop that never converges costs money and trust. Cap the steps and the spend, and treat hitting a cap as a failure to investigate, not a setting to raise.</p>
+<h3>6. Take freedom back as easily as you give it</h3>
+<p>Models change underneath you. A model update, a new tool or a new data source can invalidate old evidence. Re-run the suite on every material change. If a critical test fails, the gate blocks and the agent drops a level automatically. Then add the failure as a regression test so it cannot return unnoticed.</p>
+<h2>How much does &quot;no failures&quot; prove?</h2>
+<p>Suppose an agent passes 50 trials with no failures. That sounds reassuring. But if its true failure rate were about 5.8%, you would still see 50 clean runs about one time in twenty. So 50 clean runs only lets you say the failure rate is probably below roughly 6% (at 95% confidence). To push that bound down to about 0.6% you need around 500 clean runs. With n clean trials the upper bound is roughly 3 divided by n, often called the rule of three.</p>
+<p>This is why high-impact actions need larger samples, human review and production monitoring, not only a small clean suite. It is also why this article says &quot;evidence&quot; and not &quot;proof&quot;.</p>
+<h2>The evidence behind this article</h2>
+<p>The controls above are small enough to read in one sitting. I wrote nine tests for them, fully mocked, with no model calls and no network. I also broke three of the controls on purpose (ignore the agent&#39;s level, ignore critical failures, ignore the payee) to check that the tests fail when they should; they did. The code is in a small open repository: <a href="https://github.com/kapilgupta86/agent-controls-harness">agent-controls-harness</a>. Run it with <code>npm test</code> on Node 18 or newer.</p>
+<h2>Limits of this advice</h2>
+<ul><li>No test suite proves a system safe or harmless. A clean suite is evidence, not proof.</li><li>The levels, thresholds and examples here are illustrative. Set thresholds for your own use case before you see the results.</li><li>For high-impact domains (health, finance, safety-critical systems, employment, legal) this is a starting point. Domain experts, legal review and independent testing are needed on top.</li><li>It adds process. For a low-risk, read-only assistant, L0 or L1 with light checks may be all you need.</li><li>This is a synthesis of common engineering practice, not a claim to a new standard or a certification.</li></ul>
+<h2>Further reading</h2>
+<ul><li><a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI Risk Management Framework</a>: a voluntary framework (AI RMF 1.0, January 2023) with a Generative AI Profile (NIST AI 600-1, July 2024).</li><li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Demystifying evals for AI agents</a>, Anthropic Engineering, 9 January 2026: grading outcomes as well as transcripts, grader types, and capability versus regression evals.</li><li><a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/">OWASP Top 10 for Agentic Applications for 2026</a>: a taxonomy of agent-specific risks, published 9 December 2025.</li></ul>
+<h2>The short version</h2>
+<ul><li>Give an agent freedom in proportion to the evidence, one level at a time.</li><li>Enforce the limits in code the model cannot talk its way past.</li><li>Let a critical failure block, and let the agent lose a level automatically.</li></ul>
+<hr>
+<p>Read it on the website, with the interactive version and sources: <a href="https://keshavaai.in/journal/autonomy-is-earned">https://keshavaai.in/journal/autonomy-is-earned</a></p>
+</div>
+</body>
+</html>

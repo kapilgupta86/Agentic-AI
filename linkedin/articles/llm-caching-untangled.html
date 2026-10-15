@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://keshavaai.in/journal/llm-caching-untangled">
+<title>[DRAFT] How LLMs generate text, and every caching term untangled (LinkedIn version)</title>
+<style>
+  body{font:16px/1.65 Georgia,serif;color:#1d2735;max-width:760px;margin:0 auto;padding:18px;background:#fff}
+  .draft{font:14px/1.5 system-ui,sans-serif;background:#fff3cd;border:1px solid #e0c36a;border-radius:10px;padding:12px 16px;margin-bottom:22px}
+  .draft b{color:#6b4e00} .draft ol{margin:6px 0 0 18px;padding:0}
+  #copy{border:1px dashed #b9c1cc;border-radius:10px;padding:6px 22px 18px}
+  h1{font-size:30px;line-height:1.2} h2{font-size:23px;margin:1.6em 0 .4em} h3{font-size:18px;margin:1.3em 0 .3em}
+  img{max-width:100%;height:auto;border:1px solid #e3e6eb;border-radius:8px} blockquote{border-left:3px solid #e8bd62;margin:1em 0;padding:2px 14px;color:#46556a}
+  pre{background:#f1f3f6;padding:12px;overflow:auto} code{background:#f1f3f6;padding:1px 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="draft">
+<b>DRAFT. Not posted to LinkedIn.</b> Original (canonical) version: <a href="https://keshavaai.in/journal/llm-caching-untangled">https://keshavaai.in/journal/llm-caching-untangled</a>. Publish on the website first; use this version only if you also want a full LinkedIn article.
+<ol>
+<li>LinkedIn: <i>Write article</i>. Title: <b>How LLMs generate text, and every caching term untangled</b></li>
+<li>Cover image: <code>../media/llm-caching-pipeline.png</code> (upload it from the repo)</li>
+<li>Select everything inside the dashed box below, copy, paste into the editor, then check headings, lists and the image.</li>
+<li>Tables do not exist in LinkedIn articles, so they are written as lists here. The interactive animation cannot be embedded: the GIF (or the MP4 attached to a post) plus a link replaces it.</li>
+<li>After publishing, set the status to "Published" in <code>linkedin/README.md</code>.</li>
+</ol>
+</div>
+<div id="copy">
+<h1>How LLMs generate text, and every caching term untangled</h1>
+<p><em>First published on <a href="https://keshavaai.in/journal/llm-caching-untangled">keshavaai.in</a></em></p>
+<p>An LLM does not generate a sentence. It generates one token. Then another. Then another. Each one runs the full machine again: tokenize, embed, attend, predict, sample, repeat. What looks like writing is a loop running thousands of times per response.</p>
+<p>That loop has two phases that behave nothing alike. Almost every optimization you have heard of (KV caching, prompt caching, prefix caching, semantic caching, quantization) only makes sense once you know which phase it fixes. Confuse the phases and you will confuse the caches.</p>
+<h2>The two phases of inference</h2>
+<p><strong>Prefill</strong> reads your entire prompt at once, in parallel. It is compute-bound: more GPU makes it faster. This phase decides time-to-first-token, the wait before anything appears.</p>
+<p><strong>Decode</strong> generates the reply one token at a time, and each new token has to look back at every token before it. It is memory-bandwidth-bound: the bottleneck is moving data, not doing maths. This phase decides tokens per second once the answer is streaming.</p>
+<p>Everything below is one question: which of these two phases does this technique speed up, and how? The diagram at the top of this page shows where each kind of caching sits in the pipeline.</p>
+<h2>Layer 1: the KV cache, which makes decode possible</h2>
+<p>During prefill, the model computes a key and a value vector for every input token (its KV pairs). During decode, generating token 500 would otherwise mean re-running attention over the 499 tokens before it, at every step. The KV cache stores those vectors so the model only appends the new token&#39;s pair and reuses the rest.</p>
+<p>Think of it as the model&#39;s short-term memory for one answer in progress. Without it, decode would slow down sharply as the conversation grows.</p>
+<p>It is not a feature you switch on or a product you buy. Inference engines do this automatically on every request. It does not persist between separate API calls, and it is not free: it grows with every token of context, which is why long conversations get slower and heavier on memory. That growing footprint is why quantizing the KV cache (storing it in INT8 or INT4 instead of full precision) is a real lever at scale.</p>
+<p><strong>Lifetime:</strong> one generation. Created during prefill, grown through decode, discarded when the response ends.</p>
+<h2>Layer 2: prompt caching (also called prefix caching)</h2>
+<p>If your next request starts with exactly the same prefix as a previous one (the same system prompt, tool definitions or reference document), why redo that prefill work? Prompt caching keeps the KV computation for the prefix and reuses it. The analogy is a bookmark: instead of rereading from page one, the model resumes at the bookmark and reads only the new material.</p>
+<p>Because the saving is on the input side, it shows up as lower cost and a faster time-to-first-token on long prompts. Generation speed once decode starts does not change, and output quality does not change either.</p>
+<p>Five mix-ups worth clearing up:</p>
+<ul><li><strong>It is not response caching.</strong> Response caching replays an old answer. Prompt caching reuses only input-side computation; the model still writes a fresh reply every time.</li><li><strong>It is not semantic caching.</strong> It needs an exact match on the prefix. Change one token (a timestamp, a session ID, a reordered example) and everything after it misses.</li><li><strong>It does not modify the model.</strong> No weights change. A hit and a miss give the same behaviour; only the compute path is shorter.</li><li><strong>It is not permanent.</strong> Cached prefixes expire, from minutes to hours or longer depending on provider and setting (see the table below).</li><li><strong>It has a minimum size.</strong> Providers set a minimum prompt length below which nothing is cached, and the minimum differs by provider and model.</li></ul>
+<p>Is &quot;prefix caching&quot; a different thing? Same mechanism, different room. &quot;Prompt caching&quot; is the name hosted API providers use for the feature you control through their API. &quot;Prefix caching&quot; is the systems term for the same idea inside a self-hosted serving engine, which can apply it automatically to any requests that share a prefix. In vLLM, for example, the cache is keyed on a hash of each block of tokens together with the tokens before it, so requests sharing a prefix share the stored blocks.</p>
+<p>The structure that makes it work is static content first, dynamic content last: tool definitions, system prompt, reference documents and conversation history up front, and the new message at the end. Anything dynamic buried in the middle silently invalidates everything after it. This, more than misconfiguration, is the most common way people lose their hit rate.</p>
+<p><strong>Use it for:</strong> multi-turn conversations, question answering over the same reference material, agent loops with stable tool definitions, and batch jobs that run one fixed instruction over many inputs. A reasonable rule of thumb is that if more than half your input tokens repeat across requests, caching should be on.</p>
+<p><strong>Skip it for:</strong> prompts that change completely each call, requests spaced further apart than the cache lifetime, prompts under the minimum size, and one-shot requests with no follow-up.</p>
+<h3>What providers document (checked 14 October 2026)</h3>
+<ul><li><strong>Anthropic</strong>. Cache lifetime: 5 minutes by default, refreshed on use; 1 hour optional. Minimum prompt: 512 to 4,096 tokens, depending on model. Cached input price: Reads at 0.1x the base input price (0.05x or 0.025x on some newer models); writes at 1.25x (5 minutes) or 2x (1 hour).</li><li><strong>OpenAI</strong>. Cache lifetime: Newest models: at least 30 minutes. Earlier models: in-memory, typically 5 to 10 minutes and up to 1 hour, or 24 hours. Minimum prompt: 1,024 tokens on the newest models; varies on earlier ones. Cached input price: Cached input discounted up to 95%; on the newest models, writes at 1.25x and reads at 0.1x.</li><li><strong>Google Gemini</strong>. Cache lifetime: Implicit caching on by default for Gemini 2.5 and newer; lifetime not stated on the page. Minimum prompt: 2,048 to 4,096 tokens, depending on model. Cached input price: Savings passed on automatically; no percentage stated.</li></ul>
+<p>Sources: <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Anthropic prompt caching</a>, <a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI prompt caching</a>, <a href="https://ai.google.dev/gemini-api/docs/caching">Google Gemini caching</a>, <a href="https://docs.vllm.ai/en/v0.8.5/design/v1/prefix_caching.html">vLLM automatic prefix caching</a>. Prices and limits change often; check the provider&#39;s page before you rely on a number.</p>
+<p>Neither Anthropic&#39;s nor OpenAI&#39;s page gives a general latency percentage, so treat any quoted figure for latency savings as workload-specific until you measure it on your own prompts.</p>
+<h3>A worked example of the write premium</h3>
+<p>Take a provider that charges 1.25x to write a 5-minute cache entry and 0.1x to read it (the Anthropic multipliers above). Count the cost of the shared prefix in units of its normal input price. Used once, caching costs 1.25 instead of 1.0, a small loss. Used twice, it costs 1.25 + 0.1 = 1.35 instead of 2.0. Used ten times within the window, it costs 1.25 + 9 x 0.1 = 2.15 instead of 10. This is arithmetic from the published multipliers, not a benchmark: your real saving depends on your hit rate and how much of each prompt is the shared prefix.</p>
+<p>Try it yourself: change the prefix size, the gap between requests and the cache lifetime, and tick the timestamp box to see the most common way a cache gets lost.</p>
+<p>Interactive version, with step-by-step controls and a text version: <a href="https://keshavaai.in/explainers/prompt-cache">https://keshavaai.in/explainers/prompt-cache</a></p>
+<p><strong>Lifetime:</strong> across requests, but only within the cache window. A middle ground between the KV cache (one generation) and a semantic cache (as long as you keep it).</p>
+<h2>Layer 3: semantic caching, skipping inference completely</h2>
+<p>This one touches neither prefill nor decode. It sits in front of the model. If a new query is close enough, by embedding similarity, to a past query, the system returns the stored answer and never calls the model.</p>
+<p>It is not a speed-up for generation, because on a hit there is no generation. It is not exact-match; that is prompt caching&#39;s job. And it is not guaranteed fresh: it replays an old answer, so it carries a real risk of staleness if the underlying facts have changed. That is the trade: near-zero cost and latency on a hit, against an occasional stale answer.</p>
+<p>The two work together. A semantic cache catches genuinely repeated questions; prompt caching cuts the cost of everything else that still shares context. Semantic cache first, prompt cache as the fallback is sometimes called double caching.</p>
+<p><strong>Lifetime:</strong> until a TTL, an eviction rule or an invalidation event removes the entry. You set the policy, so it can be minutes or months.</p>
+<h2>Why these terms get confused</h2>
+<p>They all sound like the model remembering things, but they act at different moments and live for different lengths of time.</p>
+<ul><li><strong>Semantic cache</strong>. Asks: Have I seen a similar question?. Skips: All of inference, on a hit. Risk: Stale answers. Lives: Until your TTL or eviction rule removes it.</li><li><strong>Prompt (prefix) cache</strong>. Asks: Have I seen this exact prefix?. Skips: Prefill for the matching part. Risk: A miss if anything upstream shifts. Lives: Minutes to hours.</li><li><strong>KV cache</strong>. Asks: Nothing: it is bookkeeping. Skips: Recomputing attention at each step. Risk: Memory growth with context length. Lives: One generation.</li></ul>
+<h2>Cost and speed cheat sheet</h2>
+<ul><li><strong>KV cache</strong>. Phase it helps: Decode. What it saves: Recomputing attention at every step. Turn it on when: Always on; nothing to configure.</li><li><strong>Prompt / prefix caching</strong>. Phase it helps: Prefill. What it saves: Cost and time-to-first-token. Turn it on when: Prefixes repeat across requests, within the cache window.</li><li><strong>Semantic caching</strong>. Phase it helps: Both (skipped entirely). What it saves: Cost and total latency. Turn it on when: Genuinely repeated questions, and some staleness is tolerable.</li><li><strong>Quantization (not a cache)</strong>. Phase it helps: Both, through memory footprint. What it saves: Memory, and some latency. Turn it on when: Almost always worth evaluating at scale.</li><li><strong>FlashAttention (not a cache)</strong>. Phase it helps: Both, through memory reads. What it saves: Latency. Turn it on when: Already standard in most modern serving stacks.</li><li><strong>Speculative decoding (not a cache)</strong>. Phase it helps: Decode. What it saves: Tokens per second. Turn it on when: High-volume, decode-bound workloads.</li></ul>
+<h2>Takeaway</h2>
+<p>Inference has two phases: prefill, which reads the whole prompt in parallel, and decode, which writes one token at a time. The KV cache makes decode possible and lives for one answer. Prompt caching reuses prefill work across requests when the prefix matches exactly, for as long as the cache window lasts. Semantic caching skips the model when a new question is close enough to an old one, trading a staleness risk for the largest saving. Three problems, three lifetimes, one idea: do not make the model redo work it has already done.</p>
+<blockquote>Measure before you trust any of this. Cache hit rate, cost per successful task and answer freshness are the three numbers to watch; see <a href="https://keshavaai.in/journal/cost-aware-testing">cost-aware testing</a> for how to test changes without a surprise bill.</blockquote>
+<hr>
+<p>Read it on the website, with the interactive version and sources: <a href="https://keshavaai.in/journal/llm-caching-untangled">https://keshavaai.in/journal/llm-caching-untangled</a></p>
+</div>
+</body>
+</html>

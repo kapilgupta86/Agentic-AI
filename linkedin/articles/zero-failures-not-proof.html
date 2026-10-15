@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://keshavaai.in/journal/zero-failures-not-proof">
+<title>[DRAFT] 50 tests passed. Is it safe? Why &quot;no failures&quot; is not proof (LinkedIn version)</title>
+<style>
+  body{font:16px/1.65 Georgia,serif;color:#1d2735;max-width:760px;margin:0 auto;padding:18px;background:#fff}
+  .draft{font:14px/1.5 system-ui,sans-serif;background:#fff3cd;border:1px solid #e0c36a;border-radius:10px;padding:12px 16px;margin-bottom:22px}
+  .draft b{color:#6b4e00} .draft ol{margin:6px 0 0 18px;padding:0}
+  #copy{border:1px dashed #b9c1cc;border-radius:10px;padding:6px 22px 18px}
+  h1{font-size:30px;line-height:1.2} h2{font-size:23px;margin:1.6em 0 .4em} h3{font-size:18px;margin:1.3em 0 .3em}
+  img{max-width:100%;height:auto;border:1px solid #e3e6eb;border-radius:8px} blockquote{border-left:3px solid #e8bd62;margin:1em 0;padding:2px 14px;color:#46556a}
+  pre{background:#f1f3f6;padding:12px;overflow:auto} code{background:#f1f3f6;padding:1px 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="draft">
+<b>DRAFT. Not posted to LinkedIn.</b> Original (canonical) version: <a href="https://keshavaai.in/journal/zero-failures-not-proof">https://keshavaai.in/journal/zero-failures-not-proof</a>. Publish on the website first; use this version only if you also want a full LinkedIn article.
+<ol>
+<li>LinkedIn: <i>Write article</i>. Title: <b>50 tests passed. Is it safe? Why &quot;no failures&quot; is not proof</b></li>
+<li>Cover image: <code>../media/zero-failures-not-proof.png</code> (upload it from the repo)</li>
+<li>Select everything inside the dashed box below, copy, paste into the editor, then check headings, lists and the image.</li>
+<li>Tables do not exist in LinkedIn articles, so they are written as lists here. The interactive animation cannot be embedded: the GIF (or the MP4 attached to a post) plus a link replaces it.</li>
+<li>After publishing, set the status to "Published" in <code>linkedin/README.md</code>.</li>
+</ol>
+</div>
+<div id="copy">
+<h1>50 tests passed. Is it safe? Why &quot;no failures&quot; is not proof</h1>
+<p><em>First published on <a href="https://keshavaai.in/journal/zero-failures-not-proof">keshavaai.in</a>. Repository with the tests: https://github.com/kapilgupta86/agent-controls-harness</em></p>
+<p><img src="../media/zero-failures-not-proof.png" alt="Three boxes. Ten tests that all passed could still hide a failure rate of about 26 in 100. Fifty tests, about 6 in 100. Five hundred tests, about 6 in 1,000."></p>
+<blockquote><strong>In one sentence:</strong> Passing every test does not prove an AI is safe. It only tells you how small the problem can still be, so set the pass rules before you test, and let one failed critical test stop the release.</blockquote>
+<h2>Think of a bag of marbles</h2>
+<p>A bag holds red and blue marbles. You pull out 10 marbles, and all 10 are blue. Does that mean there are no red ones? No. There could still be quite a few red ones hiding at the bottom. Now pull out 500 marbles, and all 500 are blue. Now you can be much more sure, but still not completely.</p>
+<p>Testing an AI is the same. Each test is one marble. &quot;All tests passed&quot; is a good sign. It is not a promise.</p>
+<p><img src="https://keshavaai.in/img/blog/zero-failures-not-proof.png" alt="For 10, 50 and 500 tests that all passed, the worst the real failure rate could still be: about 26 in 100, 6 in 100 and 6 in 1,000."></p>
+<h2>How much does &quot;no failures&quot; really tell you?</h2>
+<p>There is a simple rule, called the <strong>rule of three</strong>. If a helper passed n tests in a row, then the real failure rate is probably below about 3 divided by n. &quot;Probably&quot; here means 95 times out of 100.</p>
+<ul><li><strong>10</strong>. The real failure rate could still be as high as: about 26 in 100.</li><li><strong>50</strong>. The real failure rate could still be as high as: about 6 in 100.</li><li><strong>100</strong>. The real failure rate could still be as high as: about 3 in 100.</li><li><strong>500</strong>. The real failure rate could still be as high as: about 6 in 1,000.</li></ul>
+<p>So 50 perfect tests do not mean &quot;safe&quot;. They mean &quot;probably fewer than 6 mistakes in every 100&quot;. For writing a friendly reply, that may be fine. For sending a payment, it is not.</p>
+<h2>The release gate: a rule that decides, not a mood</h2>
+<p>A <strong>release gate</strong> is a rule, written in code, that says whether a change may go live. It runs on every change, like a security guard at a door. It has two kinds of rule:</p>
+<ul><li><strong>A blocker.</strong> Some tests are critical. For example: &quot;a yes for one payment must never work for a different payment&quot;. If even one critical test fails, the change is stopped. Good marks elsewhere cannot hide it.</li><li><strong>A pass mark.</strong> For everyday tests you choose a mark, such as 9 out of 10. You must choose it before you test. If you choose it afterwards, you will be tempted to move the line to fit the result.</li></ul>
+<p>This is why a helper that gets 49 out of 50 tests right can still be stopped. If the one it missed was critical, the answer is no.</p>
+<h2>Three habits that make the gate honest</h2>
+<ul><li><strong>Check what happened, not what was said.</strong> If the AI says &quot;refund sent&quot;, look at the payment record. The words may be wrong even when they sound sure.</li><li><strong>Run the cheap tests first.</strong> Quick, free checks go first. The slow, costly test goes last. Stop at the first critical failure, because there is no point paying for the slow tests after a fast one said no.</li><li><strong>Test the grader too.</strong> Often another AI marks the answers. Before you trust it, let it mark 50 answers that people already marked. If it agrees with the people most of the time, use it. Check again whenever you change the grader.</li></ul>
+<h2>What to do</h2>
+<ul><li>Write down which tests are critical. Keep that list short and serious.</li><li>Choose the pass mark before you run the tests.</li><li>Say &quot;no failures in 50 tests&quot;, never &quot;it is safe&quot;.</li><li>Use more tests for riskier jobs.</li><li>Add every real mistake as a new test.</li></ul>
+<h2>The limits of this advice</h2>
+<ul><li>The rule of three assumes the tests are independent and look like real use. Tests that are too similar to each other, or too easy, make the number look better than it is.</li><li>It tells you about the kinds of cases you tested. It says nothing about kinds you never thought of.</li><li>A test that always passes is worth nothing. Check that your tests can fail: break something on purpose and see the gate say no.</li><li>The numbers here are examples. Your own risk decides how low the failure rate must be.</li></ul>
+<h2>Words explained</h2>
+<ul><li><strong>Critical test:</strong> a test for something that must never go wrong. One failure stops the release.</li><li><strong>Release gate:</strong> a rule that decides whether a change may go live.</li><li><strong>Pass mark:</strong> the score needed to pass the everyday tests, chosen before testing.</li><li><strong>Rule of three:</strong> if n tests all passed, the real failure rate is probably below about 3 divided by n.</li><li><strong>Grader (judge):</strong> an AI or a program that marks an answer right or wrong.</li><li><strong>Regression:</strong> something that used to work and now does not.</li></ul>
+<h2>For engineers</h2>
+<p>This section has the exact details. Everything above is the simple version of it.</p>
+<ul><li><strong>The bound.</strong> With zero failures in n independent trials, the one-sided 95% upper confidence limit on the failure rate p solves (1 - p)^n = 0.05, so p = 1 - 0.05^(1/n), which is close to 3/n. For n = 10, 50, 100 and 500 that gives 25.9%, 5.8%, 3.0% and 0.6%. Pick the confidence level and the allowed failure rate for each risk tier, and solve for n.</li><li><strong>Gate logic.</strong> A critical failure blocks regardless of the mean. The pass threshold is fixed in the repository before the run. Report scores by category and risk tag, and gate on the worst category, not the average.</li><li><strong>Outcome over transcript.</strong> Grade the end state (the record changed, the payment exists), and use the transcript to explain a failure, not to excuse it. Anthropic&#39;s write-up on agent evals draws the same line and separates capability evals from regression evals.</li><li><strong>Cost order.</strong> Deterministic checks on every change (approval binding, budget stops, schema), targeted model-based checks next, the full end-to-end run with a judge once per release. Fail fast on the first critical failure.</li><li><strong>Judge calibration.</strong> Compare judge scores with human labels on a sample of about 50, track agreement over time, rotate answer order, and score against a rubric. Re-run the comparison after any judge-model change.</li><li><strong>Test the tests.</strong> Mutation-check the gate: introduce a known fault and confirm the gate fails. The example harness for this series does exactly that: https://github.com/kapilgupta86/agent-controls-harness</li><li><strong>Frameworks.</strong> NIST AI RMF 1.0 (voluntary, Jan 2023) and NIST AI 600-1 (Jul 2024) are the usual references for risk-based testing. They do not prescribe sample sizes.</li><li><strong>Where it fits.</strong> The book extends Chapter 12 with this material, and Appendices D and E carry the test-case template and sixteen edge cases. Autonomy levels are in the article on earned autonomy.</li></ul>
+<hr>
+<p>Read it on the website, with the interactive version and sources: <a href="https://keshavaai.in/journal/zero-failures-not-proof">https://keshavaai.in/journal/zero-failures-not-proof</a></p>
+</div>
+</body>
+</html>

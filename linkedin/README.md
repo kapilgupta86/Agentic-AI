@@ -6,6 +6,7 @@ Drafts for LinkedIn, kept here next to the sources. **Nothing in this folder has
 |---|---|---|---|---|
 | Autonomy is earned: how much freedom should an AI agent get? | Draft | [article](articles/autonomy-is-earned.html) · [post](posts/autonomy-is-earned.md) | [autonomy-is-earned](https://keshavaai.in/journal/autonomy-is-earned) | |
 | AI caching, explained simply: three ways an AI avoids doing the same work twice | Draft | [article](articles/llm-caching-untangled.html) · [post](posts/llm-caching-untangled.md) | [llm-caching-untangled](https://keshavaai.in/journal/llm-caching-untangled) | |
+| 50 tests passed. Is it safe? Why "no failures" is not proof | Draft | [article](articles/zero-failures-not-proof.html) · [post](posts/zero-failures-not-proof.md) | [zero-failures-not-proof](https://keshavaai.in/journal/zero-failures-not-proof) | |
 
 ## The workflow
 1. Publish on the website first (the page, sitemap and feed go live together).

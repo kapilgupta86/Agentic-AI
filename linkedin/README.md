@@ -5,7 +5,7 @@ Drafts for LinkedIn, kept here next to the sources. **Nothing in this folder has
 | Piece | Status | Files | Canonical page | Posted on |
 |---|---|---|---|---|
 | Autonomy is earned: how much freedom should an AI agent get? | Draft | [article](articles/autonomy-is-earned.html) · [post](posts/autonomy-is-earned.md) | [autonomy-is-earned](https://keshavaai.in/journal/autonomy-is-earned) | |
-| How LLMs generate text, and every caching term untangled | Draft | [article](articles/llm-caching-untangled.html) · [post](posts/llm-caching-untangled.md) | [llm-caching-untangled](https://keshavaai.in/journal/llm-caching-untangled) | |
+| AI caching, explained simply: three ways an AI avoids doing the same work twice | Draft | [article](articles/llm-caching-untangled.html) · [post](posts/llm-caching-untangled.md) | [llm-caching-untangled](https://keshavaai.in/journal/llm-caching-untangled) | |
 
 ## The workflow
 1. Publish on the website first (the page, sitemap and feed go live together).
